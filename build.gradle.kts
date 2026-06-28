@@ -1,10 +1,14 @@
 plugins {
     id("java")
-
+    application
 }
 
 group = "com.haadlit_sp"
 version = "1.0-SNAPSHOT"
+
+application {
+    mainClass.set("com.haadlit_sp.Main")
+}
 
 repositories {
     mavenCentral()

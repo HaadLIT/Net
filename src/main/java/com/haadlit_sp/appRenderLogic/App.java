@@ -1,48 +1,53 @@
 package com.haadlit_sp.appRenderLogic;
 
-import javax.swing.*;
+import com.haadlit_sp.appCoreLogic.Net;
+import com.haadlit_sp.appRenderLogic.pages.HomePage;
+import com.haadlit_sp.appRenderLogic.pages.SessionsPage;
+import com.haadlit_sp.appRenderLogic.theme.Theme;
 
-import com.haadlit_sp.appRenderLogic.pages.Page1;
-import com.haadlit_sp.appRenderLogic.pages.Page2;
-import com.haadlit_sp.appRenderLogic.pages.Page3;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import java.awt.CardLayout;
 
-import java.awt.*;
+/**
+ * Top-level window. Owns the single {@link Net} core shared by both pages and
+ * switches between the Home dashboard and the Sessions browser via a
+ * {@link CardLayout}.
+ */
+public final class App {
 
-public class App {
-    private JFrame frame;
-    private JPanel cardPanel;   // Holds all "pages"
-    private CardLayout cardLayout;
+    public static final String HOME = "Home";
+    public static final String SESSIONS = "Sessions";
+
+    private final CardLayout cardLayout = new CardLayout();
+    private final JPanel cardPanel = new JPanel(cardLayout);
+    private final SessionsPage sessionsPage;
 
     public App() {
+        Net core = new Net();
 
-        frame = new JFrame("Multi-Page Swing App");
+        JFrame frame = new JFrame("Net Usage Tracker");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(500, 400);
+        frame.setSize(640, 460);
+        frame.setLocationRelativeTo(null);
 
-        // Create CardLayout manager
-        cardLayout = new CardLayout();
-        cardPanel = new JPanel(cardLayout);
+        cardPanel.setBackground(Theme.BG);
 
-        // Instantiate each page (separate classes)
-        Page1 page1 = new Page1(this);
-        Page2 page2 = new Page2(this);
-        Page3 page3 = new Page3(this);
+        HomePage homePage = new HomePage(this, core);
+        sessionsPage = new SessionsPage(this, core);
+        cardPanel.add(homePage, HOME);
+        cardPanel.add(sessionsPage, SESSIONS);
 
-        // Register pages with unique names
-        cardPanel.add(page1, "Page1");
-        cardPanel.add(page2, "Page2");
-        cardPanel.add(page3, "Page3");
-
-        // Start on Page1
-        showPage("Page1");
-
-        frame.add(cardPanel);
+        showPage(HOME);
+        frame.setContentPane(cardPanel);
         frame.setVisible(true);
-
     }
 
-    // Method for switching pages
+    /** Switches pages, refreshing the sessions list each time it is shown. */
     public void showPage(String pageName) {
+        if (SESSIONS.equals(pageName)) {
+            sessionsPage.refresh();
+        }
         cardLayout.show(cardPanel, pageName);
     }
 }
