@@ -6,9 +6,12 @@ import com.haadlit_sp.appCoreLogic.io.NetworkReader;
  * Owns the live state of a single session: snapshots a baseline on start, then
  * derives {@link Metrics} on each tick relative to that baseline.
  *
- * <p>Fail-safe: OS byte counters can reset or wrap, so every delta is clamped
- * to {@code >= 0} — a wrap shows as a stalled tick rather than a negative or
- * absurdly large reading.
+ * <p>Fail-safe: OS byte counters can reset or wrap (Windows {@code netstat -e}
+ * uses a 32-bit counter that rolls over every 4 GB). Rather than diffing
+ * against a fixed baseline — which a wrap would push negative — usage is
+ * accumulated from per-tick deltas, and any negative delta (a wrap/reset) is
+ * treated as a skipped tick. The running total therefore never collapses
+ * to zero mid-session.
  */
 public final class SessionTracker {
 
@@ -17,7 +20,7 @@ public final class SessionTracker {
     private final NetworkReader reader;
 
     private boolean active;
-    private long baselineTotal;
+    private long accumulatedBytes;
     private long startMillis;
     private long lastTotal;
     private long lastTickMillis;
@@ -29,10 +32,10 @@ public final class SessionTracker {
 
     /** Snapshots the current counter and begins a session. */
     public void start() throws Exception {
-        baselineTotal = reader.read().total();
         startMillis = System.currentTimeMillis();
-        lastTotal = baselineTotal;
+        lastTotal = reader.read().total();
         lastTickMillis = startMillis;
+        accumulatedBytes = 0;
         lastDataUsed = 0;
         active = true;
     }
@@ -45,20 +48,23 @@ public final class SessionTracker {
         long now = System.currentTimeMillis();
         long total = reader.read().total();
 
-        long dataUsed = Math.max(0, total - baselineTotal);
+        // A negative delta means the counter wrapped or was reset; skip that
+        // tick's jump rather than corrupting the running total.
         long deltaBytes = Math.max(0, total - lastTotal);
+        accumulatedBytes += deltaBytes;
+
         long deltaMillis = Math.max(1, now - lastTickMillis);
         long durationMillis = now - startMillis;
 
         double speedKBs = (deltaBytes / 1024.0) / (deltaMillis / 1000.0);
         double hours = durationMillis / 3_600_000.0;
-        double gbPerHour = hours > 0 ? (dataUsed / BYTES_PER_GB) / hours : 0.0;
+        double gbPerHour = hours > 0 ? (accumulatedBytes / BYTES_PER_GB) / hours : 0.0;
 
         lastTotal = total;
         lastTickMillis = now;
-        lastDataUsed = dataUsed;
+        lastDataUsed = accumulatedBytes;
 
-        return new Metrics(dataUsed, durationMillis, gbPerHour, speedKBs);
+        return new Metrics(accumulatedBytes, durationMillis, gbPerHour, speedKBs);
     }
 
     public void stop() {
