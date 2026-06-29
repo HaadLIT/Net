@@ -26,3 +26,11 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+
+// Make `gradlew jar` produce a directly runnable jar. The app has no
+// third-party dependencies, so the plain jar is fully self-contained.
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "com.haadlit_sp.Main"
+    }
+}
