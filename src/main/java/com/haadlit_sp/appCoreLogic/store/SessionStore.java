@@ -32,11 +32,20 @@ public final class SessionStore {
     private final Path directory;
 
     public SessionStore() {
-        this(Path.of("Data"));
+        this(defaultDirectory());
     }
 
     public SessionStore(Path directory) {
         this.directory = directory;
+    }
+
+    /**
+     * A fixed, writable per-user location ({@code <user home>/NetTracker/Data})
+     * so sessions are saved and read from the same place regardless of the
+     * working directory the app was launched from.
+     */
+    private static Path defaultDirectory() {
+        return Path.of(System.getProperty("user.home"), "NetTracker", "Data");
     }
 
     /** Next sequential session number (max existing + 1). */
