@@ -12,8 +12,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -86,7 +88,8 @@ public final class SessionStore {
                     Integer.parseInt(map.get("number")),
                     LocalDateTime.parse(map.get("start")),
                     parseNullable(map.get("stop")),
-                    Long.parseLong(map.get("dataUsedBytes"))));
+                    Long.parseLong(map.get("dataUsedBytes")),
+                    parseSamples(map.getOrDefault("speed", ""))));
         } catch (Exception e) {
             LOG.log(System.Logger.Level.WARNING, "Skipping unreadable session file: " + file, e);
             return Optional.empty();
@@ -105,7 +108,30 @@ public final class SessionStore {
         map.put("stop", session.stop() == null ? "" : session.stop().toString());
         map.put("dataUsedBytes", session.dataUsedBytes());
         map.put("dataUsed", Format.bytes(session.dataUsedBytes()));
+        map.put("speed", toCsv(session.speedSamples()));
         return map;
+    }
+
+    /** Speed samples are stored as a flat comma-separated string (1 decimal). */
+    private static String toCsv(List<Double> samples) {
+        return samples.stream()
+                .map(value -> String.format(Locale.ROOT, "%.1f", value))
+                .collect(Collectors.joining(","));
+    }
+
+    private static List<Double> parseSamples(String csv) {
+        List<Double> samples = new ArrayList<>();
+        if (csv == null || csv.isBlank()) {
+            return samples;
+        }
+        for (String token : csv.split(",")) {
+            try {
+                samples.add(Double.parseDouble(token.trim()));
+            } catch (NumberFormatException ignored) {
+                // skip a malformed sample rather than dropping the whole graph
+            }
+        }
+        return samples;
     }
 
     private static boolean isSessionFile(Path file) {

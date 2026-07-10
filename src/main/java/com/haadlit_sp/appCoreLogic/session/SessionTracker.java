@@ -2,6 +2,8 @@ package com.haadlit_sp.appCoreLogic.session;
 
 import com.haadlit_sp.appCoreLogic.io.NetworkReader;
 
+import java.util.List;
+
 /**
  * Owns the live state of a single session: snapshots a baseline on start, then
  * derives {@link Metrics} on each tick relative to that baseline.
@@ -17,7 +19,11 @@ public final class SessionTracker {
 
     private static final double BYTES_PER_GB = 1024.0 * 1024.0 * 1024.0;
 
+    /** Target point budget for the stored trend (must be even). */
+    private static final int TREND_CAPACITY = 600;
+
     private final NetworkReader reader;
+    private final SpeedTrend trend = new SpeedTrend(TREND_CAPACITY);
 
     private boolean active;
     private long accumulatedBytes;
@@ -37,6 +43,7 @@ public final class SessionTracker {
         lastTickMillis = startMillis;
         accumulatedBytes = 0;
         lastDataUsed = 0;
+        trend.reset();
         active = true;
     }
 
@@ -60,6 +67,8 @@ public final class SessionTracker {
         double hours = durationMillis / 3_600_000.0;
         double gbPerHour = hours > 0 ? (accumulatedBytes / BYTES_PER_GB) / hours : 0.0;
 
+        trend.add(speedKBs);
+
         lastTotal = total;
         lastTickMillis = now;
         lastDataUsed = accumulatedBytes;
@@ -81,5 +90,10 @@ public final class SessionTracker {
 
     public long lastDataUsed() {
         return lastDataUsed;
+    }
+
+    /** Downsampled live-speed (KB/s) history for this session, for the trend graph. */
+    public List<Double> samples() {
+        return trend.snapshot();
     }
 }

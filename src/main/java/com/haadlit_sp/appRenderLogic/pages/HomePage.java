@@ -38,7 +38,6 @@ public final class HomePage extends JPanel {
     private final MetricCard speedCard = new MetricCard("Live Speed", Theme.ACCENT);
 
     private final JButton startButton = Buttons.filled("Start Session", Theme.ACCENT);
-    private final JButton checkButton = Buttons.outlined("Check Now", Theme.ACCENT);
     private final JButton stopButton = Buttons.outlined("Stop Session", Theme.DANGER);
     private final JLabel footer = new JLabel(" ");
 
@@ -73,13 +72,15 @@ public final class HomePage extends JPanel {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         actions.setOpaque(false);
         actions.add(startButton);
-        actions.add(checkButton);
         actions.add(stopButton);
 
-        JButton sessionsButton = Buttons.outlined("View Sessions »", Theme.DIM);
+        JButton sessionsButton = Buttons.outlined("Sessions »", Theme.DIM);
         sessionsButton.addActionListener(e -> app.showPage(App.SESSIONS));
-        JPanel nav = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        JButton settingsButton = Buttons.outlined("Settings", Theme.DIM);
+        settingsButton.addActionListener(e -> app.showPage(App.SETTINGS));
+        JPanel nav = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         nav.setOpaque(false);
+        nav.add(settingsButton);
         nav.add(sessionsButton);
 
         JPanel buttonRow = new JPanel(new BorderLayout());
@@ -100,7 +101,6 @@ public final class HomePage extends JPanel {
 
     private void wireButtons() {
         startButton.addActionListener(e -> onStart());
-        checkButton.addActionListener(e -> update());
         stopButton.addActionListener(e -> onStop());
     }
 
@@ -149,7 +149,6 @@ public final class HomePage extends JPanel {
     private void setSessionState(boolean active) {
         header.setActive(active);
         startButton.setEnabled(!active);
-        checkButton.setEnabled(active);
         stopButton.setEnabled(active);
     }
 

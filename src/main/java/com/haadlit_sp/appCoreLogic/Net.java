@@ -51,7 +51,8 @@ public final class Net {
                 store.nextNumber(),
                 sessionStart != null ? sessionStart : LocalDateTime.now().withNano(0),
                 LocalDateTime.now().withNano(0),
-                tracker.lastDataUsed());
+                tracker.lastDataUsed(),
+                tracker.samples());
         tracker.stop();
         store.save(session);
         return session;

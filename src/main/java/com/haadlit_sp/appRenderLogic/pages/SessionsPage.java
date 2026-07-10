@@ -5,15 +5,18 @@ import com.haadlit_sp.appCoreLogic.session.Session;
 import com.haadlit_sp.appCoreLogic.util.Format;
 import com.haadlit_sp.appRenderLogic.App;
 import com.haadlit_sp.appRenderLogic.components.Buttons;
+import com.haadlit_sp.appRenderLogic.components.TrendGraph;
 import com.haadlit_sp.appRenderLogic.theme.Theme;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -42,6 +45,7 @@ public final class SessionsPage extends JPanel {
     private final DefaultListModel<Session> model = new DefaultListModel<>();
     private final JList<Session> list = new JList<>(model);
     private final JTextArea details = new JTextArea();
+    private final TrendGraph trendGraph = new TrendGraph();
     private final JTextField numberField = new JTextField(6);
     private final JLabel status = new JLabel(" ");
 
@@ -54,12 +58,18 @@ public final class SessionsPage extends JPanel {
 
         add(buildTopBar(app), BorderLayout.NORTH);
         add(buildList(), BorderLayout.WEST);
-        add(buildDetails(), BorderLayout.CENTER);
+        add(buildCenter(), BorderLayout.CENTER);
     }
 
     private JPanel buildTopBar(App app) {
         JButton homeButton = Buttons.outlined("« Home", Theme.DIM);
         homeButton.addActionListener(e -> app.showPage(App.HOME));
+        JButton settingsButton = Buttons.outlined("Settings", Theme.DIM);
+        settingsButton.addActionListener(e -> app.showPage(App.SETTINGS));
+        JPanel leftNav = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        leftNav.setOpaque(false);
+        leftNav.add(homeButton);
+        leftNav.add(settingsButton);
 
         JLabel prompt = new JLabel("Open session #");
         prompt.setForeground(Theme.DIM);
@@ -91,7 +101,7 @@ public final class SessionsPage extends JPanel {
 
         JPanel bar = new JPanel(new BorderLayout());
         bar.setOpaque(false);
-        bar.add(homeButton, BorderLayout.WEST);
+        bar.add(leftNav, BorderLayout.WEST);
         bar.add(lookup, BorderLayout.CENTER);
         bar.add(status, BorderLayout.SOUTH);
         return bar;
@@ -126,6 +136,20 @@ public final class SessionsPage extends JPanel {
         return scroll;
     }
 
+    private JComponent buildCenter() {
+        JPanel graphWrap = new JPanel(new BorderLayout());
+        graphWrap.setBackground(Theme.CARD);
+        graphWrap.setBorder(BorderFactory.createLineBorder(Theme.CARD_BORDER));
+        graphWrap.add(trendGraph, BorderLayout.CENTER);
+
+        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, buildDetails(), graphWrap);
+        split.setResizeWeight(0.55);
+        split.setDividerSize(6);
+        split.setBorder(null);
+        split.setBackground(Theme.BG);
+        return split;
+    }
+
     private JScrollPane buildDetails() {
         details.setEditable(false);
         details.setBackground(Theme.CARD);
@@ -143,6 +167,7 @@ public final class SessionsPage extends JPanel {
     public void refresh() {
         status.setText(" ");
         model.clear();
+        trendGraph.setSamples(List.of());
         List<Session> sessions = core.history();
         for (Session session : sessions) {
             model.addElement(session);
@@ -186,6 +211,7 @@ public final class SessionsPage extends JPanel {
     private void showSession(Session session) {
         details.setText(formatSession(session));
         details.setCaretPosition(0);
+        trendGraph.setSamples(session.speedSamples());
     }
 
     private static String rowLabel(Session session) {
