@@ -1,5 +1,6 @@
 package com.haadlit_sp.appCoreLogic.store;
 
+import com.haadlit_sp.appCoreLogic.io.AppConnection;
 import com.haadlit_sp.appCoreLogic.session.Session;
 import com.haadlit_sp.appCoreLogic.util.Format;
 import com.haadlit_sp.appCoreLogic.util.Json;
@@ -89,7 +90,8 @@ public final class SessionStore {
                     LocalDateTime.parse(map.get("start")),
                     parseNullable(map.get("stop")),
                     Long.parseLong(map.get("dataUsedBytes")),
-                    parseSamples(map.getOrDefault("speed", ""))));
+                    parseSamples(map.getOrDefault("speed", "")),
+                    parseApps(map.getOrDefault("apps", ""))));
         } catch (Exception e) {
             LOG.log(System.Logger.Level.WARNING, "Skipping unreadable session file: " + file, e);
             return Optional.empty();
@@ -109,7 +111,34 @@ public final class SessionStore {
         map.put("dataUsedBytes", session.dataUsedBytes());
         map.put("dataUsed", Format.bytes(session.dataUsedBytes()));
         map.put("speed", toCsv(session.speedSamples()));
+        map.put("apps", appsToString(session.apps()));
         return map;
+    }
+
+    /** Apps are stored as {@code name:peak,name:peak,...}. */
+    private static String appsToString(List<AppConnection> apps) {
+        return apps.stream()
+                .map(app -> app.name() + ":" + app.connections())
+                .collect(Collectors.joining(","));
+    }
+
+    private static List<AppConnection> parseApps(String value) {
+        List<AppConnection> apps = new ArrayList<>();
+        if (value == null || value.isBlank()) {
+            return apps;
+        }
+        for (String token : value.split(",")) {
+            int sep = token.lastIndexOf(':');
+            if (sep <= 0) {
+                continue;
+            }
+            try {
+                apps.add(new AppConnection(token.substring(0, sep), Integer.parseInt(token.substring(sep + 1))));
+            } catch (NumberFormatException ignored) {
+                // skip a malformed entry rather than dropping the whole list
+            }
+        }
+        return apps;
     }
 
     /** Speed samples are stored as a flat comma-separated string (1 decimal). */

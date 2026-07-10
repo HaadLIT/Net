@@ -1,10 +1,12 @@
 package com.haadlit_sp.appRenderLogic.pages;
 
 import com.haadlit_sp.appCoreLogic.Net;
+import com.haadlit_sp.appCoreLogic.session.LiveUpdate;
 import com.haadlit_sp.appCoreLogic.session.Metrics;
 import com.haadlit_sp.appCoreLogic.session.Session;
 import com.haadlit_sp.appCoreLogic.util.Format;
 import com.haadlit_sp.appRenderLogic.App;
+import com.haadlit_sp.appRenderLogic.components.AppUsagePanel;
 import com.haadlit_sp.appRenderLogic.components.Buttons;
 import com.haadlit_sp.appRenderLogic.components.Header;
 import com.haadlit_sp.appRenderLogic.components.MetricCard;
@@ -21,9 +23,10 @@ import java.awt.GridLayout;
 import java.util.Locale;
 
 /**
- * Home dashboard: header status, a 2x2 grid of live metric cards and the
- * Start / Check Now / Stop controls. A single 1000ms {@link Timer} drives all
- * live updates and fires on the EDT, so every mutation here is EDT-safe.
+ * Home dashboard: header status, a live per-app panel, a 2x2 grid of live
+ * metric cards and the Start / Stop controls. A single 1000ms {@link Timer}
+ * drives all live updates and fires on the EDT, so every mutation here is
+ * EDT-safe.
  */
 public final class HomePage extends JPanel {
 
@@ -32,6 +35,7 @@ public final class HomePage extends JPanel {
     private final Net core;
 
     private final Header header = new Header();
+    private final AppUsagePanel appPanel = new AppUsagePanel();
     private final MetricCard dataCard = new MetricCard("Data Used", Theme.ACCENT);
     private final MetricCard durationCard = new MetricCard("Session Duration", Theme.TEXT);
     private final MetricCard rateCard = new MetricCard("Estimated GB / Hour", Theme.MINT);
@@ -47,10 +51,11 @@ public final class HomePage extends JPanel {
         this.core = core;
 
         setBackground(Theme.BG);
-        setLayout(new BorderLayout(0, 12));
+        setLayout(new BorderLayout(12, 12));
         setBorder(BorderFactory.createEmptyBorder(20, 22, 18, 22));
 
         add(header, BorderLayout.NORTH);
+        add(appPanel, BorderLayout.WEST);
         add(buildGrid(), BorderLayout.CENTER);
         add(buildSouth(app), BorderLayout.SOUTH);
 
@@ -127,6 +132,7 @@ public final class HomePage extends JPanel {
             LOG.log(System.Logger.Level.ERROR, "Failed to stop/save session", ex);
         }
         setSessionState(false);
+        appPanel.clear();
     }
 
     /** Reads fresh metrics and repaints the cards. Safe to call any time. */
@@ -135,11 +141,13 @@ public final class HomePage extends JPanel {
             return;
         }
         try {
-            Metrics m = core.refresh();
+            LiveUpdate live = core.refresh();
+            Metrics m = live.metrics();
             dataCard.setValue(Format.bytes(m.dataUsedBytes()));
             durationCard.setValue(Format.duration(m.durationMillis()));
             rateCard.setValue(String.format(Locale.ROOT, "%.2f GB/h", m.gbPerHour()));
             speedCard.setValue(String.format(Locale.ROOT, "%.1f KB/s", m.speedKBs()));
+            appPanel.setApps(live.apps());
         } catch (Exception ex) {
             showError("Read failed: " + ex.getMessage());
             LOG.log(System.Logger.Level.WARNING, "Metric refresh failed", ex);

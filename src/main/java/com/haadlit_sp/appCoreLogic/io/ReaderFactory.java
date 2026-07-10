@@ -21,4 +21,16 @@ public final class ReaderFactory {
         }
         return new LinuxReader();
     }
+
+    /**
+     * Per-app connection reader. Only Windows is supported; other platforms get
+     * an empty reader so the rest of the app runs unchanged.
+     */
+    public static AppConnectionReader createAppConnectionReader() {
+        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        if (os.contains("win")) {
+            return new WindowsAppConnectionReader();
+        }
+        return java.util.List::of; // no-op: empty list on non-Windows
+    }
 }

@@ -38,7 +38,7 @@ public final class App {
         settings = settingsStore.load();
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(640, 480);
+        frame.setSize(820, 500);
         frame.setLocationRelativeTo(null);
         frame.setAlwaysOnTop(settings.alwaysOnTop());
 

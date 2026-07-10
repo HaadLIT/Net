@@ -1,6 +1,7 @@
 package com.haadlit_sp.appRenderLogic.pages;
 
 import com.haadlit_sp.appCoreLogic.Net;
+import com.haadlit_sp.appCoreLogic.io.AppConnection;
 import com.haadlit_sp.appCoreLogic.session.Session;
 import com.haadlit_sp.appCoreLogic.util.Format;
 import com.haadlit_sp.appRenderLogic.App;
@@ -222,14 +223,24 @@ public final class SessionsPage extends JPanel {
         LocalDateTime start = session.start();
         LocalDateTime stop = session.stop();
         String duration = stop == null ? "--" : Format.duration(Duration.between(start, stop).toMillis());
-        return new StringBuilder()
+
+        StringBuilder sb = new StringBuilder()
                 .append("Session #").append(String.format("%04d", session.number())).append('\n')
                 .append("Date:       ").append(start.format(DATE)).append('\n')
                 .append("Started:    ").append(start.format(TIME)).append('\n')
                 .append("Stopped:    ").append(stop == null ? "--" : stop.format(TIME)).append('\n')
                 .append("Duration:   ").append(duration).append('\n')
                 .append("Data Used:  ").append(Format.bytes(session.dataUsedBytes()))
-                .append("  (").append(session.dataUsedBytes()).append(" bytes)")
-                .toString();
+                .append("  (").append(session.dataUsedBytes()).append(" bytes)").append('\n');
+
+        sb.append('\n').append("Active Apps (peak connections):").append('\n');
+        if (session.apps().isEmpty()) {
+            sb.append("  (none recorded)");
+        } else {
+            for (AppConnection app : session.apps()) {
+                sb.append(String.format("  %-24s %d%n", app.name(), app.connections()));
+            }
+        }
+        return sb.toString();
     }
 }

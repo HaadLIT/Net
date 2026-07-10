@@ -1,5 +1,7 @@
 package com.haadlit_sp.appCoreLogic.session;
 
+import com.haadlit_sp.appCoreLogic.io.AppConnection;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -11,7 +13,8 @@ import java.util.List;
  * @param stop          when the session was stopped
  * @param dataUsedBytes total bytes used over the session
  * @param speedSamples  per-second live-speed (KB/s) history, for the trend graph
+ * @param apps          apps seen on the network, with peak connection counts
  */
 public record Session(int number, LocalDateTime start, LocalDateTime stop, long dataUsedBytes,
-                      List<Double> speedSamples) {
+                      List<Double> speedSamples, List<AppConnection> apps) {
 }
