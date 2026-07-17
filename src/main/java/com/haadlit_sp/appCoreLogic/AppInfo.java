@@ -8,9 +8,16 @@ package com.haadlit_sp.appCoreLogic;
 public final class AppInfo {
 
     public static final String NAME = "Net Usage Tracker";
-    public static final String VERSION = "1.1.0";
+    public static final String VERSION = "1.2.0";
 
     public static final String CHANGELOG = """
+            v1.2.0
+              - Fixed a major over-count: Data Used was up to ~7x too high.
+                Windows readings now come from per-interface counters
+                (netsh subinterfaces) instead of the netstat -e aggregate,
+                which counted the same bytes once per filter/virtual adapter
+                entry. Totals now match carrier/phone usage closely.
+
             v1.1.0
               - Added Settings page (always-on-top toggle, version, changelog).
               - Session view now shows a live-speed trend graph.

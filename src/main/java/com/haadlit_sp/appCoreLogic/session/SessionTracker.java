@@ -8,12 +8,11 @@ import java.util.List;
  * Owns the live state of a single session: snapshots a baseline on start, then
  * derives {@link Metrics} on each tick relative to that baseline.
  *
- * <p>Fail-safe: OS byte counters can reset or wrap (Windows {@code netstat -e}
- * uses a 32-bit counter that rolls over every 4 GB). Rather than diffing
- * against a fixed baseline — which a wrap would push negative — usage is
- * accumulated from per-tick deltas, and any negative delta (a wrap/reset) is
- * treated as a skipped tick. The running total therefore never collapses
- * to zero mid-session.
+ * <p>Fail-safe: OS byte counters can wrap, or reset when an interface
+ * reconnects (e.g. a hotspot dropping). Rather than diffing against a fixed
+ * baseline — which either event would push negative — usage is accumulated
+ * from per-tick deltas, and any negative delta is treated as a skipped tick.
+ * The running total therefore never collapses to zero mid-session.
  */
 public final class SessionTracker {
 
