@@ -28,6 +28,9 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
+# Local network usage history
+Data/
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

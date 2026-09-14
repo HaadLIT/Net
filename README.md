@@ -65,7 +65,7 @@ Completed sessions are stored as JSON files in:
 <user home>/NetTracker/Data/
 ```
 
-This keeps session history available even when the application is launched from a different working directory. The repository includes a sample `Data/` directory for development purposes; personal runtime data is stored in the user-specific location above.
+This keeps session history available even when the application is launched from a different working directory. Runtime session data is intentionally excluded from version control.
 
 ## Project Structure
 
