@@ -12,7 +12,7 @@ public final class AppInfo {
 
     public static final String CHANGELOG = """
             v1.3.0
-              - Dev changes
+              - Dev changes | Git privacy guide
 
             v1.2.0
               - Fixed a major over-count: Data Used was up to ~7x too high.
